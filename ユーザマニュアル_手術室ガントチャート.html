@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手術室ガントチャート生成ツール ユーザマニュアル</title>
+<style>
+  body{font-family:'Meiryo UI','メイリオ',sans-serif;margin:0;padding:0;background:#f5f5f5;color:#333;line-height:1.7}
+  .container{max-width:900px;margin:0 auto;background:#fff;padding:40px 50px;box-shadow:0 0 20px rgba(0,0,0,0.08)}
+  h1{color:#1a5276;border-bottom:3px solid #1a5276;padding-bottom:12px;font-size:1.6em}
+  h2{color:#1a5276;border-left:5px solid #2980b9;padding-left:12px;margin-top:36px;font-size:1.25em}
+  h3{color:#2c3e50;margin-top:24px;font-size:1.05em}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:.92em}
+  th{background:#2980b9;color:#fff;padding:10px 14px;text-align:left;font-weight:normal}
+  td{padding:9px 14px;border:1px solid #ddd;vertical-align:top}
+  tr:nth-child(even){background:#f8f9fa}
+  code{background:#eef;padding:2px 6px;border-radius:3px;font-family:Consolas,monospace;font-size:.9em}
+  .note{background:#eaf2f8;border-left:4px solid #2980b9;padding:12px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+  .warning{background:#fdf2e9;border-left:4px solid #e67e22;padding:12px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+  .danger{background:#fdedec;border-left:4px solid #e74c3c;padding:12px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+  .step-box{background:#f0f8f0;border:2px solid #27ae60;border-radius:8px;padding:20px;margin:20px 0}
+  .step-box h3{color:#27ae60;margin-top:0}
+  .step-num{display:inline-block;background:#27ae60;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-weight:bold;margin-right:8px}
+  .color-sample{display:inline-block;width:60px;height:20px;vertical-align:middle;border:1px solid #ccc;border-radius:2px}
+  .header-info{color:#666;font-size:.9em;margin-bottom:30px}
+  .header-info span{margin-right:20px}
+  .toc{background:#f8f9fa;padding:20px 30px;border-radius:6px;margin:20px 0}
+  .toc ul{padding-left:20px}
+  .toc li{margin:6px 0}
+  .toc a{color:#2980b9;text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  .terminal{background:#1e1e1e;color:#4ec9b0;padding:16px 20px;border-radius:6px;font-family:Consolas,monospace;font-size:.88em;line-height:1.6;white-space:pre}
+  .folder-tree{background:#1e1e1e;color:#d4d4d4;padding:16px 20px;border-radius:6px;font-family:Consolas,monospace;font-size:.88em;line-height:1.6;white-space:pre}
+  .footer{text-align:center;color:#999;font-size:.8em;margin-top:40px;padding-top:20px;border-top:1px solid #eee}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>手術室ガントチャート生成ツール<br>ユーザマニュアル</h1>
+<div class="header-info">
+  <span>バージョン: 1.1</span>
+  <span>最終更新: 2025年9月</span>
+  <span>対象: 手術室管理部門</span>
+</div>
+
+<div class="toc">
+<strong>目次</strong>
+<ul>
+  <li><a href="#s1">1. ツール概要</a></li>
+  <li><a href="#s2">2. 導入・フォルダ構成</a></li>
+  <li><a href="#s3">3. 使い方（操作手順）</a></li>
+  <li><a href="#s4">4. 入力データ仕様</a></li>
+  <li><a href="#s5">5. 出力ファイルの見方</a></li>
+  <li><a href="#s6">6. 定義・計算ロジック</a></li>
+  <li><a href="#s7">7. 月次運用フロー</a></li>
+  <li><a href="#s8">8. トラブルシューティング</a></li>
+  <li><a href="#s9">付録：設定値一覧（開発担当者向け）</a></li>
+</ul>
+</div>
+
+<h2 id="s1">1. ツール概要</h2>
+<p>本ツールは、手術実施データ（Excel）から手術室ごとの稼働状況を日別ガントチャートとして自動生成する<strong>Windows用アプリケーション（exeファイル）</strong>です。</p>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>アプリケーション</td><td><code>手術室ガントチャート生成.exe</code></td></tr>
+<tr><td>動作OS</td><td>Windows 10 / 11</td></tr>
+<tr><td>Python環境</td><td><strong>不要</strong>（exe内に同梱済み）</td></tr>
+<tr><td>入力ファイル</td><td><code>ガントチャートデータ.xlsx</code></td></tr>
+<tr><td>出力ファイル</td><td><code>手術室ガントチャート.xlsx</code></td></tr>
+<tr><td>所要時間</td><td>約5〜15秒（初回起動はやや遅い場合あり）</td></tr>
+</table>
+
+<h2 id="s2">2. 導入・フォルダ構成</h2>
+<h3>2.1 配置</h3>
+<p>以下のファイルを<strong>同一フォルダ</strong>に配置してください。場所はデスクトップや共有ドライブなど任意です。</p>
+<div class="folder-tree">📁 手術室ガントチャート/
+├── <span style="color:#4ec9b0;font-weight:bold">手術室ガントチャート生成.exe</span>  ← ダブルクリックで実行
+├── <span style="color:#dcdcaa">ガントチャートデータ.xlsx</span>    ← 入力データ（毎月差し替え）
+├── <span style="color:#9cdcfe">手術室ガントチャート.xlsx</span>    ← 出力（自動生成される）
+└── <span style="color:#ce9178">ユーザマニュアル.html</span>         ← 本マニュアル</div>
+
+<div class="warning"><strong>重要：</strong> exeファイルと入力Excelは必ず<strong>同じフォルダ</strong>に置いてください。</div>
+
+<h3>2.2 インストール</h3>
+<p><strong>不要です。</strong> exeファイルを配置するだけで使用できます。Python等のインストールは一切不要です。</p>
+
+<h2 id="s3">3. 使い方（操作手順）</h2>
+<div class="step-box">
+<h3>操作は3ステップ</h3>
+<p><span class="step-num">1</span><strong>入力データを配置する</strong></p>
+<p style="margin-left:40px">当月の手術実施データを <code>ガントチャートデータ.xlsx</code> として保存します。</p>
+
+<p><span class="step-num">2</span><strong>exeをダブルクリックする</strong></p>
+<p style="margin-left:40px"><code>手術室ガントチャート生成.exe</code> をダブルクリックします。黒い画面が表示され処理が実行されます。</p>
+
+<p><span class="step-num">3</span><strong>出力ファイルを開く</strong></p>
+<p style="margin-left:40px">同じフォルダに <code>手術室ガントチャート.xlsx</code> が生成されます。Excelで開いて確認してください。</p>
+</div>
+
+<h3>3.1 実行中の画面</h3>
+<div class="terminal">入力ファイル読み込み: C:\...\ガントチャートデータ.xlsx
+ガントチャート生成完了: C:\...\手術室ガントチャート.xlsx
+全24日分のガントチャートを出力しました。</div>
+
+<h3>3.2 初回実行時の注意</h3>
+<div class="warning"><strong>Windows SmartScreen警告：</strong> 初回に「WindowsによってPCが保護されました」と出る場合は「詳細情報」→「実行」をクリックしてください。署名のないexeに対する標準的な警告で、ツール自体に問題はありません。</div>
+<div class="warning"><strong>ウイルス対策ソフトの誤検知：</strong> 一部のウイルス対策ソフトで誤検知される場合があります。exeをホワイトリスト（除外リスト）に追加してください。</div>
+
+<div class="danger"><strong>出力Excelを閉じてから実行してください。</strong> <code>手術室ガントチャート.xlsx</code> をExcelで開いたまま実行すると書き込みエラーになります。</div>
+
+<h2 id="s4">4. 入力データ仕様</h2>
+<h3>4.1 ファイル要件</h3>
+<table>
+<tr><th>項目</th><th>値</th><th>備考</th></tr>
+<tr><td>ファイル名</td><td><code>ガントチャートデータ.xlsx</code></td><td>固定（変更不可）</td></tr>
+<tr><td>シート名</td><td><code>ガントチャートデータ</code></td><td>固定（変更不可）</td></tr>
+<tr><td>形式</td><td>.xlsx（Excel 2007以降）</td><td>.xls は不可</td></tr>
+<tr><td>配置</td><td>exeと同じフォルダ</td><td>―</td></tr>
+</table>
+
+<h3>4.2 カラム定義</h3>
+<table>
+<tr><th>カラム名</th><th>型</th><th>必須</th><th>説明</th><th>例</th></tr>
+<tr><td>手術実施管理番号</td><td>数値/文字列</td><td>○</td><td>一意の管理番号</td><td>1000104765</td></tr>
+<tr><td>手術実施日</td><td>文字列</td><td>○</td><td>YYYY/MM/DD形式</td><td>2025/09/01</td></tr>
+<tr><td>曜日</td><td>文字列</td><td>○</td><td>「○曜日」形式</td><td>月曜日</td></tr>
+<tr><td>執刀診療科名</td><td>文字列</td><td>○</td><td>正式診療科名</td><td>総合外科</td></tr>
+<tr><td>実施手術室名</td><td>文字列</td><td>○</td><td>手術室番号</td><td>01A, 09, ｱﾝｷﾞｵ</td></tr>
+<tr><td>入室時刻</td><td>時刻</td><td>○</td><td>HH:MM:SS形式</td><td>08:44:00</td></tr>
+<tr><td>麻酔終了時刻</td><td>時刻</td><td>○</td><td>HH:MM:SS形式</td><td>13:39:00</td></tr>
+<tr><td>実施申込区分</td><td>文字列</td><td>○</td><td>定時 / 臨時 / 緊急</td><td>定時</td></tr>
+<tr><td>実施手術名０１</td><td>文字列</td><td>○</td><td>手術名称</td><td>腹腔鏡下結腸悪性腫瘍切除術</td></tr>
+</table>
+
+<h3>4.3 手術室名の有効値</h3>
+<table>
+<tr><th>手術室名</th><th>稼働率計算</th><th>チャート表示</th></tr>
+<tr><td>01A</td><td>○（0.5室換算）</td><td>○</td></tr>
+<tr><td>01B</td><td>○（0.5室換算）</td><td>○</td></tr>
+<tr><td>02, 03, 05, 06, 07, 08, 09, 10</td><td>○（各1.0室）</td><td>○</td></tr>
+<tr><td>ｱﾝｷﾞｵ</td><td>×（除外）</td><td>○</td></tr>
+</table>
+
+<h2 id="s5">5. 出力ファイルの見方</h2>
+<h3>5.1 全体構成</h3>
+<table>
+<tr><th>行</th><th>内容</th></tr>
+<tr><td>1行目</td><td>タイトル</td></tr>
+<tr><td>2〜4行目</td><td>凡例（色分け・稼働率計算の注記）</td></tr>
+<tr><td>6行目以降</td><td>日付ごとのガントチャートブロック（ヘッダ行 + 11部屋行）が繰り返し</td></tr>
+</table>
+
+<h3>5.2 日付ブロックの構成</h3>
+<table>
+<tr><th>列</th><th>内容</th></tr>
+<tr><td>列B</td><td>日付（MM/DD(曜)）と稼働率（%）。全部屋を縦結合で表示。</td></tr>
+<tr><td>列C</td><td>手術室名（01A 〜 ｱﾝｷﾞｵ の11行）</td></tr>
+<tr><td>列D以降</td><td>8:00〜22:00の時間軸。手術はセルの塗りつぶし＋ラベルで表現。</td></tr>
+</table>
+
+<h3>5.3 色分け</h3>
+<table>
+<tr><th>区分</th><th>色</th><th>サンプル</th></tr>
+<tr><td>定時・臨時</td><td>水色（#BDD7EE）</td><td><span class="color-sample" style="background:#BDD7EE"></span></td></tr>
+<tr><td>緊急</td><td>ピンク（#FF99CC）</td><td><span class="color-sample" style="background:#FF99CC"></span></td></tr>
+</table>
+
+<h3>5.4 診療科略称一覧</h3>
+<table>
+<tr><th>正式名称</th><th>略称</th><th>正式名称</th><th>略称</th></tr>
+<tr><td>総合外科</td><td>総</td><td>眼科</td><td>眼</td></tr>
+<tr><td>乳腺外科</td><td>乳</td><td>循環器内科</td><td>循</td></tr>
+<tr><td>心臓血管外科</td><td>心</td><td>呼吸器外科</td><td>呼</td></tr>
+<tr><td>整形外科・スポーツ診療科</td><td>整</td><td>泌尿器科</td><td>泌</td></tr>
+<tr><td>形成外科</td><td>形</td><td>耳鼻咽喉・頭頚科</td><td>耳</td></tr>
+<tr><td>産科・婦人科</td><td>産</td><td>脳神経外科</td><td>脳</td></tr>
+<tr><td>腎・高血圧内科</td><td>腎</td><td>麻酔科・ペインクリニック</td><td>麻</td></tr>
+<tr><td>小児外科</td><td>小</td><td></td><td></td></tr>
+</table>
+
+<h2 id="s6">6. 定義・計算ロジック</h2>
+
+<h3>6.1 稼働率の定義</h3>
+<div class="note"><strong>稼働率（%）= 実稼働時間（分）÷ 利用可能時間（分）× 100</strong></div>
+
+<h3>6.2 利用可能時間（分母）</h3>
+<table>
+<tr><th>曜日</th><th>計算時間帯</th><th>時間</th><th>室数</th><th>利用可能時間</th></tr>
+<tr><td>平日（月〜金）</td><td>9:00〜17:00</td><td>8時間（480分）</td><td>9室</td><td><strong>4,320分</strong></td></tr>
+<tr><td>土曜</td><td>9:00〜13:00</td><td>4時間（240分）</td><td>9室</td><td><strong>2,160分</strong></td></tr>
+</table>
+
+<h3>6.3 室数の換算ルール（合計9室）</h3>
+<table>
+<tr><th>手術室</th><th>換算係数</th><th>理由</th></tr>
+<tr><td>01A</td><td>0.5</td><td>小手術室</td></tr>
+<tr><td>01B</td><td>0.5</td><td>小手術室</td></tr>
+<tr><td>02, 03, 05, 06, 07, 08, 09, 10</td><td>各1.0</td><td>標準手術室</td></tr>
+<tr><td>ｱﾝｷﾞｵ</td><td>0（除外）</td><td>稼働率計算の対象外</td></tr>
+<tr><td><strong>合計</strong></td><td><strong>9.0室</strong></td><td>0.5 + 0.5 + 8 × 1.0</td></tr>
+</table>
+
+<h3>6.4 実稼働時間（分子）の算出ルール</h3>
+<table>
+<tr><th>条件</th><th>処理</th><th>例</th></tr>
+<tr><td>計算時間帯をまたぐ手術</td><td>時間帯内の部分のみ計上</td><td>8:30-10:00 → 9:00-10:00の60分のみ</td></tr>
+<tr><td>計算時間帯外の手術</td><td>0分として扱う</td><td>18:00-20:00 → カウントしない</td></tr>
+<tr><td>01A / 01B の手術</td><td>稼働時間 × 0.5 で加算</td><td>01Aで60分 → 30分として計上</td></tr>
+<tr><td>ｱﾝｷﾞｵ の手術</td><td>計算に含めない</td><td>チャートには表示される</td></tr>
+</table>
+
+<h3>6.5 計算例</h3>
+<div class="note">
+<strong>例：2025/09/01（月曜日）</strong><br><br>
+<strong>分母：</strong>480分 × 9室 = 4,320分<br><br>
+<strong>分子（抜粋）：</strong><br>
+・01A 14:13-15:50 → 計算帯内97分 × <strong>0.5</strong> = 48.5分<br>
+・02 09:03-10:42 → 99分 × 1.0 = 99分<br>
+・09 08:44-13:39 → 9:00-13:39 = 279分 × 1.0 = 279分<br>
+・ｱﾝｷﾞｵ → 除外（0分）<br>
+… 全手術を同様に合算 …<br><br>
+<strong>稼働率：</strong>合計 ÷ 4,320 × 100 = <strong>67.2%</strong>
+</div>
+
+<h3>6.6 時間軸の定義</h3>
+<table>
+<tr><th>項目</th><th>値</th></tr>
+<tr><td>表示範囲</td><td>8:00〜22:00</td></tr>
+<tr><td>最小単位</td><td>10分（1列 = 10分）</td></tr>
+<tr><td>1時間あたり列数</td><td>6列</td></tr>
+<tr><td>総列数</td><td>90列（15時間 × 6列）</td></tr>
+</table>
+
+<h3>6.7 バー描画の定義</h3>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>開始位置</td><td>入室時刻を10分単位に切り捨てた列</td></tr>
+<tr><td>終了位置</td><td>麻酔終了時刻を10分単位に切り捨てた列</td></tr>
+<tr><td>ラベル</td><td>【診療科略称】-手術名（先頭40文字）</td></tr>
+<tr><td>範囲外</td><td>8:00前開始→8:00列から、22:50超→22:50列で打ち切り</td></tr>
+</table>
+
+<h2 id="s7">7. 月次運用フロー</h2>
+<table>
+<tr><th>手順</th><th>作業内容</th><th>タイミング</th></tr>
+<tr><td>①</td><td>電子カルテ等から当月の手術実施データをExcel出力</td><td>月末〜翌月初</td></tr>
+<tr><td>②</td><td><code>ガントチャートデータ.xlsx</code> としてフォルダに保存（上書きOK）</td><td>同上</td></tr>
+<tr><td>③</td><td><code>手術室ガントチャート生成.exe</code> をダブルクリック</td><td>同上</td></tr>
+<tr><td>④</td><td>生成された <code>手術室ガントチャート.xlsx</code> を確認・配布</td><td>同上</td></tr>
+<tr><td>⑤</td><td>（任意）前月の出力ファイルをリネームまたは別フォルダにアーカイブ</td><td>同上</td></tr>
+</table>
+<div class="note"><strong>ポイント：</strong>出力ファイルは毎回上書きされます。前月分を残したい場合は事前にファイル名を変更してください。例：<code>手術室ガントチャート_2025年8月.xlsx</code></div>
+
+<h2 id="s8">8. トラブルシューティング</h2>
+<table>
+<tr><th style="width:28%">症状</th><th style="width:28%">原因</th><th style="width:44%">対処</th></tr>
+<tr><td>ダブルクリックしても一瞬で閉じる</td><td>入力ファイルが見つからない</td><td><code>ガントチャートデータ.xlsx</code> がexeと同じフォルダにあるか・ファイル名が正しいか確認</td></tr>
+<tr><td>「WindowsによってPCが保護されました」</td><td>SmartScreen警告（初回のみ）</td><td>「詳細情報」→「実行」をクリック</td></tr>
+<tr><td>ウイルス対策ソフトにブロックされる</td><td>PyInstaller製exeの誤検知</td><td>exeをウイルス対策ソフトの除外リストに追加</td></tr>
+<tr><td>出力ファイルが生成されない</td><td>シート名の不一致</td><td>入力Excelのシート名が「ガントチャートデータ」であるか確認</td></tr>
+<tr><td>「Permission denied」エラー</td><td>出力Excelが開いたまま</td><td>Excelファイルを閉じてから再実行</td></tr>
+<tr><td>バーが表示されない部屋がある</td><td>その日その部屋にデータなし</td><td>正常動作。入力データを確認。</td></tr>
+<tr><td>稼働率が想定と異なる</td><td>時刻形式不正・手術室名の表記揺れ</td><td>入力データのHH:MM:SS形式と手術室名を確認</td></tr>
+<tr><td>新診療科が1文字だけ表示される</td><td>診療科略称が未登録</td><td>開発担当者にソースコード修正＋exe再ビルドを依頼</td></tr>
+<tr><td>文字が切れて見える</td><td>画面解像度/ズーム設定</td><td>Excelのズーム倍率を80%程度に調整</td></tr>
+</table>
+
+<h2 id="s9">付録：設定値一覧（開発担当者向け）</h2>
+<p>以下の設定はソースコード（<code>generate_gantt_chart.py</code>）で定義されています。変更にはソースコード修正＋<strong>exeの再ビルド</strong>が必要です。</p>
+<table>
+<tr><th>設定項目</th><th>変数名</th><th>現在値</th></tr>
+<tr><td>入力ファイル名</td><td>INPUT_FILE</td><td>ガントチャートデータ.xlsx</td></tr>
+<tr><td>出力ファイル名</td><td>OUTPUT_FILE</td><td>手術室ガントチャート.xlsx</td></tr>
+<tr><td>手術室の表示順</td><td>ROOM_ORDER</td><td>["01A","01B","02","03","05","06","07","08","09","10","ｱﾝｷﾞｵ"]</td></tr>
+<tr><td>時間範囲</td><td>TIME_START_HOUR / TIME_END_HOUR</td><td>8 / 22</td></tr>
+<tr><td>定時の色</td><td>COLOR_NORMAL</td><td>#BDD7EE</td></tr>
+<tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>#FF99CC</td></tr>
+<tr><td>室数換算</td><td>ROOM_WEIGHT</td><td>01A:0.5, 01B:0.5, ｱﾝｷﾞｵ:0</td></tr>
+<tr><td>室数合計</td><td>room_count</td><td>9.0</td></tr>
+</table>
+<div class="warning"><strong>注意：</strong>設定変更にはソースコード修正とexe再ビルドが必要です。エンドユーザーが直接変更することはできません。</div>
+
+<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v1.1 &copy; 2025</div>
+</div>
+</body>
+</html>

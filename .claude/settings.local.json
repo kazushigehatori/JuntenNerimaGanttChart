@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show:*)",
+      "Bash(pyinstaller:*)",
+      "Bash(dir:*)",
+      "Bash(copy \"C:\\\\Users\\\\user\\\\source\\\\repos\\\\JuntenNerimaGanttChart\\\\dist\\\\手術室ガントチャート生成.exe\" \"C:\\\\Users\\\\user\\\\source\\\\repos\\\\JuntenNerimaGanttChart\\\\手術室ガントチャート生成.exe\")",
+      "Bash(cmd /c copy:*)",
+      "Bash(cmd /c dir \"C:\\\\Users\\\\user\\\\source\\\\repos\\\\JuntenNerimaGanttChart\\\\手術室ガントチャート生成.exe\")",
+      "Bash(python create_manual_docx.py:*)",
+      "Bash(del \"C:\\\\Users\\\\user\\\\source\\\\repos\\\\JuntenNerimaGanttChart\\\\create_manual_docx.py\")",
+      "Bash(\"C:/Users/user/source/repos/JuntenNerimaOperoomUseTransitionAsTimezone/時間帯別稼働推移計算.exe\")"
+    ]
+  }
+}
