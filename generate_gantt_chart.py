@@ -65,8 +65,9 @@ DEPT_SHORT = {
 }
 
 # 実施区分の色分け（デフォルト値。テンプレートシートがあれば上書きされる）
-COLOR_NORMAL = "A0C8E4"   # 水色（定時・臨時）
-COLOR_EMERGENCY = "FF8CCC" # ピンク（緊急）
+COLOR_SCHEDULED = "A0C8E4"   # 水色（定時）  ← テンプレートC2
+COLOR_URGENT = "6DABD5"      # 濃い水色（臨時） ← テンプレートC3
+COLOR_EMERGENCY = "FF8CCC"   # ピンク（緊急）  ← テンプレートC4
 
 # フォント設定
 FONT_NAME = "Meiryo UI"
@@ -337,8 +338,10 @@ def write_day_block(ws, start_row, date_str, weekday, day_data, rooms):
                 urgency = op.get("実施申込区分", "定時")
                 if urgency == "緊急":
                     color = COLOR_EMERGENCY
+                elif urgency == "臨時":
+                    color = COLOR_URGENT
                 else:
-                    color = COLOR_NORMAL
+                    color = COLOR_SCHEDULED
                 fill = PatternFill('solid', fgColor=color)
 
                 surgery_name = op.get("実施手術名０１", "")
@@ -387,12 +390,17 @@ def setup_gantt_sheet(ws, title):
     ws.cell(row=legend_row, column=legend_col, value="■凡例:")
     ws.cell(row=legend_row, column=legend_col).font = Font(name=FONT_NAME, size=8, bold=True)
 
-    cell = ws.cell(row=legend_row, column=legend_col + 2, value="定時・臨時")
-    cell.fill = PatternFill('solid', fgColor=COLOR_NORMAL)
+    cell = ws.cell(row=legend_row, column=legend_col + 2, value="定時")
+    cell.fill = PatternFill('solid', fgColor=COLOR_SCHEDULED)
     cell.font = Font(name=FONT_NAME, size=8)
     cell.alignment = Alignment(horizontal='center')
 
-    cell = ws.cell(row=legend_row, column=legend_col + 4, value="緊急")
+    cell = ws.cell(row=legend_row, column=legend_col + 4, value="臨時")
+    cell.fill = PatternFill('solid', fgColor=COLOR_URGENT)
+    cell.font = Font(name=FONT_NAME, size=8)
+    cell.alignment = Alignment(horizontal='center')
+
+    cell = ws.cell(row=legend_row, column=legend_col + 6, value="緊急")
     cell.fill = PatternFill('solid', fgColor=COLOR_EMERGENCY)
     cell.font = Font(name=FONT_NAME, size=8)
     cell.alignment = Alignment(horizontal='center')
@@ -448,19 +456,26 @@ def main():
     data_ws.title = "ガントチャートデータ"
 
     # テンプレートシートから設定を読み取り
-    global COLOR_NORMAL, COLOR_EMERGENCY, LABEL_FONT_NAME, LABEL_FONT_SIZE
+    global COLOR_SCHEDULED, COLOR_URGENT, COLOR_EMERGENCY, LABEL_FONT_NAME, LABEL_FONT_SIZE
     src_wb = load_workbook(INPUT_FILE)
     if "テンプレート" in src_wb.sheetnames:
         tpl_ws = src_wb["テンプレート"]
 
-        # 色の読み取り
+        # 色の読み取り（C2=定時、C3=臨時、C4=緊急）
+        c2_fill = tpl_ws.cell(row=2, column=3).fill
+        if c2_fill.fill_type == "solid" and c2_fill.fgColor and c2_fill.fgColor.rgb:
+            rgb = str(c2_fill.fgColor.rgb)
+            if len(rgb) == 8:
+                rgb = rgb[2:]
+            COLOR_SCHEDULED = rgb
+            print(f"テンプレートC2から定時の色を取得: #{COLOR_SCHEDULED}")
         c3_fill = tpl_ws.cell(row=3, column=3).fill
         if c3_fill.fill_type == "solid" and c3_fill.fgColor and c3_fill.fgColor.rgb:
             rgb = str(c3_fill.fgColor.rgb)
             if len(rgb) == 8:
                 rgb = rgb[2:]
-            COLOR_NORMAL = rgb
-            print(f"テンプレートC3から定時・臨時の色を取得: #{COLOR_NORMAL}")
+            COLOR_URGENT = rgb
+            print(f"テンプレートC3から臨時の色を取得: #{COLOR_URGENT}")
         c4_fill = tpl_ws.cell(row=4, column=3).fill
         if c4_fill.fill_type == "solid" and c4_fill.fgColor and c4_fill.fgColor.rgb:
             rgb = str(c4_fill.fgColor.rgb)

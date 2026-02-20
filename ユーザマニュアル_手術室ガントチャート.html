@@ -39,7 +39,7 @@
 
 <h1>手術室ガントチャート生成ツール<br>ユーザマニュアル</h1>
 <div class="header-info">
-  <span>バージョン: 2.2</span>
+  <span>バージョン: 2.3</span>
   <span>最終更新: 2026年2月</span>
   <span>対象: 手術室管理部門</span>
 </div>
@@ -121,10 +121,11 @@
 
 <div class="note"><strong>テンプレートシートについて：</strong> 入力ファイルに「テンプレート」シートがある場合、以下の設定を動的に読み取ります。テンプレートシートがない場合はデフォルト値が使用されます。
 
-<h4 style="margin:12px 0 4px">カスタマイズ可能な設定（C3〜C5）</h4>
+<h4 style="margin:12px 0 4px">カスタマイズ可能な設定（C2〜C5）</h4>
 <table style="margin-top:4px">
 <tr><th>セル</th><th>読み取る内容</th><th>デフォルト値</th></tr>
-<tr><td>C3</td><td>背景色 → 定時・臨時のガントバー色</td><td>#A0C8E4（水色）</td></tr>
+<tr><td>C2</td><td>背景色 → 定時のガントバー色</td><td>#A0C8E4（水色）</td></tr>
+<tr><td>C3</td><td>背景色 → 臨時のガントバー色</td><td>#6DABD5（濃い水色）</td></tr>
 <tr><td>C4</td><td>背景色 → 緊急のガントバー色</td><td>#FF8CCC（ピンク）</td></tr>
 <tr><td>C5</td><td>フォント名・サイズ → ガントバーのラベル表示フォント</td><td>Meiryo UI / 6pt</td></tr>
 </table>
@@ -196,12 +197,14 @@
 <h3>5.4 色分け</h3>
 <table>
 <tr><th>区分</th><th>色（デフォルト）</th><th>サンプル</th><th>変更方法</th></tr>
-<tr><td>定時・臨時</td><td>水色（#A0C8E4）</td><td><span class="color-sample" style="background:#A0C8E4"></span></td><td>テンプレートシートC3セルの背景色を変更</td></tr>
+<tr><td>定時</td><td>水色（#A0C8E4）</td><td><span class="color-sample" style="background:#A0C8E4"></span></td><td>テンプレートシートC2セルの背景色を変更</td></tr>
+<tr><td>臨時</td><td>濃い水色（#6DABD5）</td><td><span class="color-sample" style="background:#6DABD5"></span></td><td>テンプレートシートC3セルの背景色を変更</td></tr>
 <tr><td>緊急</td><td>ピンク（#FF8CCC）</td><td><span class="color-sample" style="background:#FF8CCC"></span></td><td>テンプレートシートC4セルの背景色を変更</td></tr>
 </table>
 <div class="note"><strong>書式のカスタマイズ：</strong> 入力ファイル（<code>ガントチャート-元データ.xlsx</code>）の「テンプレート」シートを編集するだけで、次回実行時から自動的に反映されます。exeの再ビルドは不要です。
 <ul style="margin-top:4px;margin-bottom:0">
-<li><strong>C3セルの背景色</strong> → 定時・臨時のバー色</li>
+<li><strong>C2セルの背景色</strong> → 定時のバー色</li>
+<li><strong>C3セルの背景色</strong> → 臨時のバー色</li>
 <li><strong>C4セルの背景色</strong> → 緊急のバー色</li>
 <li><strong>C5セルのフォント名・サイズ</strong> → ガントバーのラベル表示フォント</li>
 <li><strong>B6:CO17の書式</strong> → 列幅・行高・罫線・ヘッダフォント・日付フォント・部屋名フォント</li>
@@ -330,7 +333,8 @@
 <tr><td>出力ファイル名</td><td>OUTPUT_FILE</td><td>手術室ガントチャート-結果.xlsx</td></tr>
 <tr><td>手術室の表示順</td><td>ROOM_ORDER</td><td>["01A","01B","02","03","05","06","07","08","09","10","ｱﾝｷﾞｵ"]</td></tr>
 <tr><td>時間範囲</td><td>TIME_START_HOUR / TIME_END_HOUR</td><td>8 / 22</td></tr>
-<tr><td>定時の色</td><td>COLOR_NORMAL</td><td>デフォルト #A0C8E4（テンプレートC3から動的取得）</td></tr>
+<tr><td>定時の色</td><td>COLOR_SCHEDULED</td><td>デフォルト #A0C8E4（テンプレートC2から動的取得）</td></tr>
+<tr><td>臨時の色</td><td>COLOR_URGENT</td><td>デフォルト #6DABD5（テンプレートC3から動的取得）</td></tr>
 <tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>デフォルト #FF8CCC（テンプレートC4から動的取得）</td></tr>
 <tr><td>ラベルフォント名</td><td>LABEL_FONT_NAME</td><td>デフォルト Meiryo UI（テンプレートC5から動的取得）</td></tr>
 <tr><td>ラベルフォントサイズ</td><td>LABEL_FONT_SIZE</td><td>デフォルト 6pt（テンプレートC5から動的取得）</td></tr>
@@ -346,7 +350,7 @@ copy dist\手術室ガントチャート.exe .</div>
 
 <div class="warning"><strong>注意：</strong>設定変更にはソースコード修正とexe再ビルドが必要です。エンドユーザーが直接変更することはできません。</div>
 
-<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v2.2 &copy; 2025</div>
+<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v2.3 &copy; 2025</div>
 </div>
 </body>
 </html>
