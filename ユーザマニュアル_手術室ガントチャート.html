@@ -39,8 +39,8 @@
 
 <h1>手術室ガントチャート生成ツール<br>ユーザマニュアル</h1>
 <div class="header-info">
-  <span>バージョン: 1.1</span>
-  <span>最終更新: 2025年9月</span>
+  <span>バージョン: 2.0</span>
+  <span>最終更新: 2026年2月</span>
   <span>対象: 手術室管理部門</span>
 </div>
 
@@ -63,11 +63,11 @@
 <p>本ツールは、手術実施データ（Excel）から手術室ごとの稼働状況を日別ガントチャートとして自動生成する<strong>Windows用アプリケーション（exeファイル）</strong>です。</p>
 <table>
 <tr><th>項目</th><th>内容</th></tr>
-<tr><td>アプリケーション</td><td><code>手術室ガントチャート生成.exe</code></td></tr>
+<tr><td>アプリケーション</td><td><code>手術室ガントチャート.exe</code></td></tr>
 <tr><td>動作OS</td><td>Windows 10 / 11</td></tr>
 <tr><td>Python環境</td><td><strong>不要</strong>（exe内に同梱済み）</td></tr>
-<tr><td>入力ファイル</td><td><code>ガントチャートデータ.xlsx</code></td></tr>
-<tr><td>出力ファイル</td><td><code>手術室ガントチャート.xlsx</code></td></tr>
+<tr><td>入力ファイル</td><td><code>ガントチャート-元データ.xlsx</code></td></tr>
+<tr><td>出力ファイル</td><td><code>手術室ガントチャート-結果.xlsx</code></td></tr>
 <tr><td>所要時間</td><td>約5〜15秒（初回起動はやや遅い場合あり）</td></tr>
 </table>
 
@@ -75,10 +75,10 @@
 <h3>2.1 配置</h3>
 <p>以下のファイルを<strong>同一フォルダ</strong>に配置してください。場所はデスクトップや共有ドライブなど任意です。</p>
 <div class="folder-tree">📁 手術室ガントチャート/
-├── <span style="color:#4ec9b0;font-weight:bold">手術室ガントチャート生成.exe</span>  ← ダブルクリックで実行
-├── <span style="color:#dcdcaa">ガントチャートデータ.xlsx</span>    ← 入力データ（毎月差し替え）
-├── <span style="color:#9cdcfe">手術室ガントチャート.xlsx</span>    ← 出力（自動生成される）
-└── <span style="color:#ce9178">ユーザマニュアル.html</span>         ← 本マニュアル</div>
+├── <span style="color:#4ec9b0;font-weight:bold">手術室ガントチャート.exe</span>       ← ダブルクリックで実行
+├── <span style="color:#dcdcaa">ガントチャート-元データ.xlsx</span>  ← 入力データ（毎月差し替え）
+├── <span style="color:#9cdcfe">手術室ガントチャート-結果.xlsx</span> ← 出力（自動生成される）
+└── <span style="color:#ce9178">ユーザマニュアル.html</span>          ← 本マニュアル</div>
 
 <div class="warning"><strong>重要：</strong> exeファイルと入力Excelは必ず<strong>同じフォルダ</strong>に置いてください。</div>
 
@@ -89,35 +89,37 @@
 <div class="step-box">
 <h3>操作は3ステップ</h3>
 <p><span class="step-num">1</span><strong>入力データを配置する</strong></p>
-<p style="margin-left:40px">当月の手術実施データを <code>ガントチャートデータ.xlsx</code> として保存します。</p>
+<p style="margin-left:40px">当月の手術実施データを <code>ガントチャート-元データ.xlsx</code> として保存します。</p>
 
 <p><span class="step-num">2</span><strong>exeをダブルクリックする</strong></p>
-<p style="margin-left:40px"><code>手術室ガントチャート生成.exe</code> をダブルクリックします。黒い画面が表示され処理が実行されます。</p>
+<p style="margin-left:40px"><code>手術室ガントチャート.exe</code> をダブルクリックします。黒い画面が表示され処理が実行されます。</p>
 
 <p><span class="step-num">3</span><strong>出力ファイルを開く</strong></p>
-<p style="margin-left:40px">同じフォルダに <code>手術室ガントチャート.xlsx</code> が生成されます。Excelで開いて確認してください。</p>
+<p style="margin-left:40px">同じフォルダに <code>手術室ガントチャート-結果.xlsx</code> が生成されます。Excelで開いて確認してください。</p>
 </div>
 
 <h3>3.1 実行中の画面</h3>
-<div class="terminal">入力ファイル読み込み: C:\...\ガントチャートデータ.xlsx
-ガントチャート生成完了: C:\...\手術室ガントチャート.xlsx
+<div class="terminal">入力ファイル読み込み: C:\...\ガントチャート-元データ.xlsx
+ガントチャート生成完了: C:\...\手術室ガントチャート-結果.xlsx
 全24日分のガントチャートを出力しました。</div>
 
 <h3>3.2 初回実行時の注意</h3>
 <div class="warning"><strong>Windows SmartScreen警告：</strong> 初回に「WindowsによってPCが保護されました」と出る場合は「詳細情報」→「実行」をクリックしてください。署名のないexeに対する標準的な警告で、ツール自体に問題はありません。</div>
 <div class="warning"><strong>ウイルス対策ソフトの誤検知：</strong> 一部のウイルス対策ソフトで誤検知される場合があります。exeをホワイトリスト（除外リスト）に追加してください。</div>
 
-<div class="danger"><strong>出力Excelを閉じてから実行してください。</strong> <code>手術室ガントチャート.xlsx</code> をExcelで開いたまま実行すると書き込みエラーになります。</div>
+<div class="danger"><strong>出力Excelを閉じてから実行してください。</strong> <code>手術室ガントチャート-結果.xlsx</code> をExcelで開いたまま実行すると書き込みエラーになります。</div>
 
 <h2 id="s4">4. 入力データ仕様</h2>
 <h3>4.1 ファイル要件</h3>
 <table>
 <tr><th>項目</th><th>値</th><th>備考</th></tr>
-<tr><td>ファイル名</td><td><code>ガントチャートデータ.xlsx</code></td><td>固定（変更不可）</td></tr>
+<tr><td>ファイル名</td><td><code>ガントチャート-元データ.xlsx</code></td><td>固定（変更不可）</td></tr>
 <tr><td>シート名</td><td><code>ガントチャートデータ</code></td><td>固定（変更不可）</td></tr>
 <tr><td>形式</td><td>.xlsx（Excel 2007以降）</td><td>.xls は不可</td></tr>
 <tr><td>配置</td><td>exeと同じフォルダ</td><td>―</td></tr>
 </table>
+
+<div class="note"><strong>テンプレートシートについて：</strong> 入力ファイルに「テンプレート」シートがある場合、C3セル（定時・臨時）とC4セル（緊急）の背景色がガントバーの色として使用されます。</div>
 
 <h3>4.2 カラム定義</h3>
 <table>
@@ -143,7 +145,16 @@
 </table>
 
 <h2 id="s5">5. 出力ファイルの見方</h2>
-<h3>5.1 全体構成</h3>
+<h3>5.1 シート構成</h3>
+<p>出力ファイル <code>手術室ガントチャート-結果.xlsx</code> は以下の<strong>3シート</strong>で構成されます。</p>
+<table>
+<tr><th>シート順</th><th>シート名</th><th>内容</th></tr>
+<tr><td>1</td><td><code>ガントチャートデータ</code></td><td>入力データ（元データ）のコピー。書式を保持してそのまま転記。</td></tr>
+<tr><td>2</td><td><code>手術室ガントチャート</code></td><td>日付順のガントチャート。全曜日（日曜含む）を日付の昇順で表示。</td></tr>
+<tr><td>3</td><td><code>手術室ガントチャート・曜日順</code></td><td>曜日順のガントチャート。月→火→水→木→金→土→日の順で、同一曜日内は第1週→第2週→...の順に表示。</td></tr>
+</table>
+
+<h3>5.2 ガントチャートシートの全体構成</h3>
 <table>
 <tr><th>行</th><th>内容</th></tr>
 <tr><td>1行目</td><td>タイトル</td></tr>
@@ -151,7 +162,7 @@
 <tr><td>6行目以降</td><td>日付ごとのガントチャートブロック（ヘッダ行 + 11部屋行）が繰り返し</td></tr>
 </table>
 
-<h3>5.2 日付ブロックの構成</h3>
+<h3>5.3 日付ブロックの構成</h3>
 <table>
 <tr><th>列</th><th>内容</th></tr>
 <tr><td>列B</td><td>日付（MM/DD(曜)）と稼働率（%）。全部屋を縦結合で表示。</td></tr>
@@ -159,14 +170,29 @@
 <tr><td>列D以降</td><td>8:00〜22:00の時間軸。手術はセルの塗りつぶし＋ラベルで表現。</td></tr>
 </table>
 
-<h3>5.3 色分け</h3>
+<h3>5.4 色分け</h3>
 <table>
 <tr><th>区分</th><th>色</th><th>サンプル</th></tr>
-<tr><td>定時・臨時</td><td>水色（#BDD7EE）</td><td><span class="color-sample" style="background:#BDD7EE"></span></td></tr>
-<tr><td>緊急</td><td>ピンク（#FF99CC）</td><td><span class="color-sample" style="background:#FF99CC"></span></td></tr>
+<tr><td>定時・臨時</td><td>水色（#A0C8E4）</td><td><span class="color-sample" style="background:#A0C8E4"></span></td></tr>
+<tr><td>緊急</td><td>ピンク（#FF8CCC）</td><td><span class="color-sample" style="background:#FF8CCC"></span></td></tr>
 </table>
+<div class="note"><strong>補足：</strong> 色は入力ファイルの「テンプレート」シートのC3セル（定時・臨時）、C4セル（緊急）の背景色に準拠しています。</div>
 
-<h3>5.4 診療科略称一覧</h3>
+<h3>5.5 曜日順シートの並び順</h3>
+<p>「手術室ガントチャート・曜日順」シートでは、以下の順で日付が並びます。</p>
+<table>
+<tr><th>順序</th><th>内容</th></tr>
+<tr><td>1</td><td>第1月曜日 → 第2月曜日 → ... → 第5月曜日（あれば）</td></tr>
+<tr><td>2</td><td>第1火曜日 → 第2火曜日 → ...</td></tr>
+<tr><td>3</td><td>第1水曜日 → 第2水曜日 → ...</td></tr>
+<tr><td>4</td><td>第1木曜日 → 第2木曜日 → ...</td></tr>
+<tr><td>5</td><td>第1金曜日 → 第2金曜日 → ...</td></tr>
+<tr><td>6</td><td>第1土曜日 → 第2土曜日 → ...</td></tr>
+<tr><td>7</td><td>第1日曜日 → 第2日曜日 → ...（データがあれば）</td></tr>
+</table>
+<div class="note"><strong>第N週の判定：</strong> 月初からの同一曜日の出現回数で決まります。例えば月の1日が水曜なら、1日=第1水曜、8日=第2水曜、15日=第3水曜... となります。</div>
+
+<h3>5.6 診療科略称一覧</h3>
 <table>
 <tr><th>正式名称</th><th>略称</th><th>正式名称</th><th>略称</th></tr>
 <tr><td>総合外科</td><td>総</td><td>眼科</td><td>眼</td></tr>
@@ -245,17 +271,17 @@
 <table>
 <tr><th>手順</th><th>作業内容</th><th>タイミング</th></tr>
 <tr><td>①</td><td>電子カルテ等から当月の手術実施データをExcel出力</td><td>月末〜翌月初</td></tr>
-<tr><td>②</td><td><code>ガントチャートデータ.xlsx</code> としてフォルダに保存（上書きOK）</td><td>同上</td></tr>
-<tr><td>③</td><td><code>手術室ガントチャート生成.exe</code> をダブルクリック</td><td>同上</td></tr>
-<tr><td>④</td><td>生成された <code>手術室ガントチャート.xlsx</code> を確認・配布</td><td>同上</td></tr>
+<tr><td>②</td><td><code>ガントチャート-元データ.xlsx</code> としてフォルダに保存（上書きOK）</td><td>同上</td></tr>
+<tr><td>③</td><td><code>手術室ガントチャート.exe</code> をダブルクリック</td><td>同上</td></tr>
+<tr><td>④</td><td>生成された <code>手術室ガントチャート-結果.xlsx</code> を確認・配布</td><td>同上</td></tr>
 <tr><td>⑤</td><td>（任意）前月の出力ファイルをリネームまたは別フォルダにアーカイブ</td><td>同上</td></tr>
 </table>
-<div class="note"><strong>ポイント：</strong>出力ファイルは毎回上書きされます。前月分を残したい場合は事前にファイル名を変更してください。例：<code>手術室ガントチャート_2025年8月.xlsx</code></div>
+<div class="note"><strong>ポイント：</strong>出力ファイルは毎回上書きされます。前月分を残したい場合は事前にファイル名を変更してください。例：<code>手術室ガントチャート-結果_2025年8月.xlsx</code></div>
 
 <h2 id="s8">8. トラブルシューティング</h2>
 <table>
 <tr><th style="width:28%">症状</th><th style="width:28%">原因</th><th style="width:44%">対処</th></tr>
-<tr><td>ダブルクリックしても一瞬で閉じる</td><td>入力ファイルが見つからない</td><td><code>ガントチャートデータ.xlsx</code> がexeと同じフォルダにあるか・ファイル名が正しいか確認</td></tr>
+<tr><td>ダブルクリックしても一瞬で閉じる</td><td>入力ファイルが見つからない</td><td><code>ガントチャート-元データ.xlsx</code> がexeと同じフォルダにあるか・ファイル名が正しいか確認</td></tr>
 <tr><td>「WindowsによってPCが保護されました」</td><td>SmartScreen警告（初回のみ）</td><td>「詳細情報」→「実行」をクリック</td></tr>
 <tr><td>ウイルス対策ソフトにブロックされる</td><td>PyInstaller製exeの誤検知</td><td>exeをウイルス対策ソフトの除外リストに追加</td></tr>
 <tr><td>出力ファイルが生成されない</td><td>シート名の不一致</td><td>入力Excelのシート名が「ガントチャートデータ」であるか確認</td></tr>
@@ -270,18 +296,24 @@
 <p>以下の設定はソースコード（<code>generate_gantt_chart.py</code>）で定義されています。変更にはソースコード修正＋<strong>exeの再ビルド</strong>が必要です。</p>
 <table>
 <tr><th>設定項目</th><th>変数名</th><th>現在値</th></tr>
-<tr><td>入力ファイル名</td><td>INPUT_FILE</td><td>ガントチャートデータ.xlsx</td></tr>
-<tr><td>出力ファイル名</td><td>OUTPUT_FILE</td><td>手術室ガントチャート.xlsx</td></tr>
+<tr><td>入力ファイル名</td><td>INPUT_FILE</td><td>ガントチャート-元データ.xlsx</td></tr>
+<tr><td>出力ファイル名</td><td>OUTPUT_FILE</td><td>手術室ガントチャート-結果.xlsx</td></tr>
 <tr><td>手術室の表示順</td><td>ROOM_ORDER</td><td>["01A","01B","02","03","05","06","07","08","09","10","ｱﾝｷﾞｵ"]</td></tr>
 <tr><td>時間範囲</td><td>TIME_START_HOUR / TIME_END_HOUR</td><td>8 / 22</td></tr>
-<tr><td>定時の色</td><td>COLOR_NORMAL</td><td>#BDD7EE</td></tr>
-<tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>#FF99CC</td></tr>
+<tr><td>定時の色</td><td>COLOR_NORMAL</td><td>#A0C8E4（テンプレートC3準拠）</td></tr>
+<tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>#FF8CCC（テンプレートC4準拠）</td></tr>
 <tr><td>室数換算</td><td>ROOM_WEIGHT</td><td>01A:0.5, 01B:0.5, ｱﾝｷﾞｵ:0</td></tr>
 <tr><td>室数合計</td><td>room_count</td><td>9.0</td></tr>
 </table>
+
+<h3>exeビルド手順</h3>
+<div class="terminal">cd C:\Users\user\source\repos\JuntenNerimaGanttChart
+pyinstaller --onefile --name 手術室ガントチャート generate_gantt_chart.py
+copy dist\手術室ガントチャート.exe .</div>
+
 <div class="warning"><strong>注意：</strong>設定変更にはソースコード修正とexe再ビルドが必要です。エンドユーザーが直接変更することはできません。</div>
 
-<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v1.1 &copy; 2025</div>
+<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v2.0 &copy; 2025</div>
 </div>
 </body>
 </html>
