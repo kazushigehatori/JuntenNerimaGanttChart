@@ -68,6 +68,10 @@ CELL_FONT = Font(name=FONT_NAME, size=7)
 SMALL_FONT = Font(name=FONT_NAME, size=6)
 DATE_FONT = Font(name=FONT_NAME, size=9, bold=True)
 
+# ラベルフォント（デフォルト値。テンプレートシートC5があれば上書きされる）
+LABEL_FONT_NAME = FONT_NAME
+LABEL_FONT_SIZE = 6
+
 # 罫線
 THIN_BORDER = Border(
     left=Side(style='thin'),
@@ -290,7 +294,7 @@ def write_day_block(ws, start_row, date_str, weekday, day_data, rooms):
                 short_name = shorten_surgery_name(surgery_name, max_chars=40)
 
                 bar_label = f"【{dept_short}】-{short_name}"
-                bar_font = Font(name=FONT_NAME, size=6, color="000000")
+                bar_font = Font(name=LABEL_FONT_NAME, size=LABEL_FONT_SIZE, color="000000")
 
                 for c in range(start_col, end_col + 1):
                     cell = ws.cell(row=row, column=c)
@@ -393,7 +397,7 @@ def main():
     data_ws.title = "ガントチャートデータ"
 
     # テンプレートシートから色を読み取り
-    global COLOR_NORMAL, COLOR_EMERGENCY
+    global COLOR_NORMAL, COLOR_EMERGENCY, LABEL_FONT_NAME, LABEL_FONT_SIZE
     src_wb = load_workbook(INPUT_FILE)
     if "テンプレート" in src_wb.sheetnames:
         tpl_ws = src_wb["テンプレート"]
@@ -411,6 +415,12 @@ def main():
                 rgb = rgb[2:]
             COLOR_EMERGENCY = rgb
             print(f"テンプレートC4から緊急の色を取得: #{COLOR_EMERGENCY}")
+        c5_font = tpl_ws.cell(row=5, column=3).font
+        if c5_font.name:
+            LABEL_FONT_NAME = c5_font.name
+        if c5_font.size:
+            LABEL_FONT_SIZE = c5_font.size
+        print(f"テンプレートC5からラベルフォントを取得: {LABEL_FONT_NAME}, {LABEL_FONT_SIZE}pt")
 
     if "ガントチャートデータ" in src_wb.sheetnames:
         src_ws = src_wb["ガントチャートデータ"]

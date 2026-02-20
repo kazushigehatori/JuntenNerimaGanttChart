@@ -39,7 +39,7 @@
 
 <h1>手術室ガントチャート生成ツール<br>ユーザマニュアル</h1>
 <div class="header-info">
-  <span>バージョン: 2.0</span>
+  <span>バージョン: 2.1</span>
   <span>最終更新: 2026年2月</span>
   <span>対象: 手術室管理部門</span>
 </div>
@@ -119,7 +119,15 @@
 <tr><td>配置</td><td>exeと同じフォルダ</td><td>―</td></tr>
 </table>
 
-<div class="note"><strong>テンプレートシートについて：</strong> 入力ファイルに「テンプレート」シートがある場合、C3セル（定時・臨時）とC4セル（緊急）の背景色を動的に読み取り、ガントバーの色として使用します。テンプレートシートのセル色を変更するだけで、出力の色を自由にカスタマイズできます。テンプレートシートがない場合はデフォルト色（水色 #A0C8E4 / ピンク #FF8CCC）が使用されます。</div>
+<div class="note"><strong>テンプレートシートについて：</strong> 入力ファイルに「テンプレート」シートがある場合、以下の設定を動的に読み取ります。テンプレートシートがない場合はデフォルト値が使用されます。
+<table style="margin-top:8px">
+<tr><th>セル</th><th>読み取る内容</th><th>デフォルト値</th></tr>
+<tr><td>C3</td><td>背景色 → 定時・臨時のガントバー色</td><td>#A0C8E4（水色）</td></tr>
+<tr><td>C4</td><td>背景色 → 緊急のガントバー色</td><td>#FF8CCC（ピンク）</td></tr>
+<tr><td>C5</td><td>フォント名・サイズ → ガントバーのラベル表示フォント</td><td>Meiryo UI / 6pt</td></tr>
+</table>
+<p style="margin-top:8px">色やフォントを変更したい場合は、テンプレートシートの該当セルを編集するだけでOKです。exeの再ビルドは不要です。</p>
+</div>
 
 <h3>4.2 カラム定義</h3>
 <table>
@@ -176,7 +184,13 @@
 <tr><td>定時・臨時</td><td>水色（#A0C8E4）</td><td><span class="color-sample" style="background:#A0C8E4"></span></td><td>テンプレートシートC3セルの背景色を変更</td></tr>
 <tr><td>緊急</td><td>ピンク（#FF8CCC）</td><td><span class="color-sample" style="background:#FF8CCC"></span></td><td>テンプレートシートC4セルの背景色を変更</td></tr>
 </table>
-<div class="note"><strong>色のカスタマイズ：</strong> 入力ファイル（<code>ガントチャート-元データ.xlsx</code>）の「テンプレート」シートにあるC3セル・C4セルの背景色を変更すると、次回実行時からガントバーの色が自動的に反映されます。exeの再ビルドは不要です。テンプレートシートがない場合はデフォルト色が使用されます。</div>
+<div class="note"><strong>色・フォントのカスタマイズ：</strong> 入力ファイル（<code>ガントチャート-元データ.xlsx</code>）の「テンプレート」シートを編集するだけで、次回実行時から自動的に反映されます。exeの再ビルドは不要です。
+<ul style="margin-top:4px;margin-bottom:0">
+<li><strong>C3セルの背景色</strong> → 定時・臨時のバー色</li>
+<li><strong>C4セルの背景色</strong> → 緊急のバー色</li>
+<li><strong>C5セルのフォント名・サイズ</strong> → ガントバーのラベル表示フォント（例：C5セルのフォントを「游ゴシック 8pt」に変えると、ラベルが游ゴシック 8ptで表示されます）</li>
+</ul>
+</div>
 
 <h3>5.5 曜日順シートの並び順</h3>
 <p>「手術室ガントチャート・曜日順」シートでは、以下の順で日付が並びます。</p>
@@ -302,6 +316,8 @@
 <tr><td>時間範囲</td><td>TIME_START_HOUR / TIME_END_HOUR</td><td>8 / 22</td></tr>
 <tr><td>定時の色</td><td>COLOR_NORMAL</td><td>デフォルト #A0C8E4（テンプレートC3から動的取得）</td></tr>
 <tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>デフォルト #FF8CCC（テンプレートC4から動的取得）</td></tr>
+<tr><td>ラベルフォント名</td><td>LABEL_FONT_NAME</td><td>デフォルト Meiryo UI（テンプレートC5から動的取得）</td></tr>
+<tr><td>ラベルフォントサイズ</td><td>LABEL_FONT_SIZE</td><td>デフォルト 6pt（テンプレートC5から動的取得）</td></tr>
 <tr><td>室数換算</td><td>ROOM_WEIGHT</td><td>01A:0.5, 01B:0.5, ｱﾝｷﾞｵ:0</td></tr>
 <tr><td>室数合計</td><td>room_count</td><td>9.0</td></tr>
 </table>
@@ -313,7 +329,7 @@ copy dist\手術室ガントチャート.exe .</div>
 
 <div class="warning"><strong>注意：</strong>設定変更にはソースコード修正とexe再ビルドが必要です。エンドユーザーが直接変更することはできません。</div>
 
-<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v2.0 &copy; 2025</div>
+<div class="footer">手術室ガントチャート生成ツール ユーザマニュアル v2.1 &copy; 2025</div>
 </div>
 </body>
 </html>
