@@ -363,10 +363,6 @@ def write_gantt_for_dates(ws, df, date_list, weekday_map):
         weekday = weekday_map.get(date_str, "")
         weekday_short = weekday.replace("曜日", "") if isinstance(weekday, str) else ""
 
-        # 日曜日はスキップ
-        if "日" in weekday_short:
-            continue
-
         try:
             dt = pd.to_datetime(date_str)
             date_display = f"{dt.month:02d}/{dt.day:02d}({weekday_short})"
@@ -423,28 +419,22 @@ def main():
 
     src_wb.close()
 
-    # === シート2: 手術室ガントチャート（日付順、日曜除外） ===
+    # === シート2: 手術室ガントチャート（日付順） ===
     ws_date = wb.create_sheet("手術室ガントチャート")
     setup_gantt_sheet(ws_date, "手術室 ガントチャート（2025年9月）")
     count_date = write_gantt_for_dates(ws_date, df, dates, weekday_map)
 
-    # === シート3: 手術室ガントチャート・曜日順（日曜除外） ===
-    # 曜日順にソート: 月→火→水→木→金→土、同一曜日内は第N週順
-    WEEKDAY_ORDER = {"月": 0, "火": 1, "水": 2, "木": 3, "金": 4, "土": 5}
+    # === シート3: 手術室ガントチャート・曜日順 ===
+    # 曜日順にソート: 月→火→水→木→金→土→日、同一曜日内は第N週順
+    WEEKDAY_ORDER = {"月": 0, "火": 1, "水": 2, "木": 3, "金": 4, "土": 5, "日": 6}
 
-    # 各日付の曜日と第N週を算出
     date_info = []
     for date_str in dates:
         weekday = weekday_map.get(date_str, "")
         weekday_short = weekday.replace("曜日", "") if isinstance(weekday, str) else ""
-        if "日" in weekday_short:
-            continue
         try:
             dt = pd.to_datetime(date_str)
-            # 第N週: その月の同一曜日の出現回数
-            day_of_month = dt.day
-            # 月初から同じ曜日が何回目か
-            nth = (day_of_month - 1) // 7 + 1
+            nth = (dt.day - 1) // 7 + 1
         except Exception:
             nth = 1
         wday_order = WEEKDAY_ORDER.get(weekday_short, 9)
@@ -460,7 +450,7 @@ def main():
     # 保存
     wb.save(OUTPUT_FILE)
     print(f"ガントチャート生成完了: {OUTPUT_FILE}")
-    print(f"全{count_date}日分のガントチャートを出力しました。（日曜除外）")
+    print(f"全{count_date}日分のガントチャートを出力しました。")
 
 
 if __name__ == "__main__":
