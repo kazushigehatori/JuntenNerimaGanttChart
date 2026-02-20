@@ -38,6 +38,13 @@ TIME_START_HOUR = 8
 TIME_END_HOUR = 22
 COLS_PER_HOUR = 6  # 1時間=6列（10分刻み）
 
+# テンプレート行オフセット（テンプレートの6行目=ヘッダ、7~17行目=部屋行）
+TPL_HEADER_ROW = 6
+TPL_FIRST_ROOM_ROW = 7
+TPL_LAST_ROOM_ROW = 17
+TPL_COL_START = 2   # B列
+TPL_COL_END = 93    # CO列
+
 # 診療科の略称マッピング
 DEPT_SHORT = {
     "総合外科": "総",
@@ -63,24 +70,70 @@ COLOR_EMERGENCY = "FF8CCC" # ピンク（緊急）
 
 # フォント設定
 FONT_NAME = "Meiryo UI"
-HEADER_FONT = Font(name=FONT_NAME, size=9, bold=True)
-CELL_FONT = Font(name=FONT_NAME, size=7)
-SMALL_FONT = Font(name=FONT_NAME, size=6)
-DATE_FONT = Font(name=FONT_NAME, size=9, bold=True)
 
 # ラベルフォント（デフォルト値。テンプレートシートC5があれば上書きされる）
 LABEL_FONT_NAME = FONT_NAME
 LABEL_FONT_SIZE = 6
 
-# 罫線
-THIN_BORDER = Border(
-    left=Side(style='thin'),
-    right=Side(style='thin'),
-    top=Side(style='thin'),
-    bottom=Side(style='thin')
-)
-THIN_SIDE = Side(style='thin')
-HAIR_SIDE = Side(style='hair')
+# テンプレートから読み取った書式情報を格納するグローバル変数
+TPL_COL_WIDTHS = {}      # {col_letter: width}
+TPL_ROW_HEIGHTS = {}     # {tpl_row_offset: height}  (0=ヘッダ, 1~11=部屋行)
+TPL_BORDERS = {}         # {(tpl_row_offset, col): Border}
+TPL_HEADER_CELLS = {}    # {col: {font, alignment, value}}
+TPL_DATE_FONT = None     # B7セルのフォント
+TPL_DATE_ALIGNMENT = None
+TPL_ROOM_FONT = None     # C7セルのフォント
+TPL_HAS_TEMPLATE = False
+
+
+def load_template(tpl_ws):
+    """テンプレートシートB6:CO17から書式情報を読み取る"""
+    global TPL_COL_WIDTHS, TPL_ROW_HEIGHTS, TPL_BORDERS
+    global TPL_HEADER_CELLS, TPL_DATE_FONT, TPL_DATE_ALIGNMENT, TPL_ROOM_FONT
+    global TPL_HAS_TEMPLATE
+
+    TPL_HAS_TEMPLATE = True
+
+    # 列幅（B～CO）
+    for col_idx in range(TPL_COL_START, TPL_COL_END + 1):
+        letter = get_column_letter(col_idx)
+        w = tpl_ws.column_dimensions[letter].width
+        if w:
+            TPL_COL_WIDTHS[letter] = w
+
+    # 行高（6～17 → offset 0～11）
+    for r in range(TPL_HEADER_ROW, TPL_LAST_ROOM_ROW + 1):
+        offset = r - TPL_HEADER_ROW
+        h = tpl_ws.row_dimensions[r].height
+        if h:
+            TPL_ROW_HEIGHTS[offset] = h
+
+    # 罫線（B6:CO17 → offset, col で格納）
+    for r in range(TPL_HEADER_ROW, TPL_LAST_ROOM_ROW + 1):
+        offset = r - TPL_HEADER_ROW
+        for c in range(TPL_COL_START, TPL_COL_END + 1):
+            cell = tpl_ws.cell(row=r, column=c)
+            TPL_BORDERS[(offset, c)] = copy(cell.border)
+
+    # 6行目ヘッダセル（フォント・配置・値）
+    for c in range(TPL_COL_START, TPL_COL_END + 1):
+        cell = tpl_ws.cell(row=TPL_HEADER_ROW, column=c)
+        TPL_HEADER_CELLS[c] = {
+            'font': copy(cell.font),
+            'alignment': copy(cell.alignment),
+            'value': cell.value,
+        }
+
+    # B7セル（日付フォント・配置）
+    b7 = tpl_ws.cell(row=TPL_FIRST_ROOM_ROW, column=2)
+    TPL_DATE_FONT = copy(b7.font)
+    TPL_DATE_ALIGNMENT = copy(b7.alignment)
+
+    # C7セル（部屋名フォント）
+    c7 = tpl_ws.cell(row=TPL_FIRST_ROOM_ROW, column=3)
+    TPL_ROOM_FONT = copy(c7.font)
+
+    print("テンプレートB6:CO17から書式情報を読み取りました")
 
 
 def time_to_col(time_val, col_offset=4):
@@ -109,7 +162,6 @@ def shorten_surgery_name(name, max_chars=20):
     """手術名を短縮"""
     if not name or not isinstance(name, str):
         return ""
-    # 括弧内の詳細を省略
     result = name
     if len(result) > max_chars:
         result = result[:max_chars]
@@ -117,31 +169,26 @@ def shorten_surgery_name(name, max_chars=20):
 
 
 def calculate_utilization(day_data, rooms, weekday=""):
-    """稼働率を計算
-    - 平日: 9:00-17:00（8h×9室）、土曜: 9:00-13:00（4h×9室）
-    - 01A・01Bは各0.5室換算、アンギオ室は除外
-    """
+    """稼働率を計算"""
     import datetime as dt_module
 
     if "土" in weekday:
         calc_start = 9 * 60
         calc_end = 13 * 60
-        standard_minutes = 240  # 4時間
+        standard_minutes = 240
     else:
         calc_start = 9 * 60
         calc_end = 17 * 60
-        standard_minutes = 480  # 8時間
+        standard_minutes = 480
 
-    # 分母: 9室換算（01A=0.5, 01B=0.5, 他8室=8.0 → 合計9.0、アンギオ除外）
     room_count = 9.0
     total_available = standard_minutes * room_count
     total_used = 0
 
-    # 室ごとの重み（01A/01Bは0.5、アンギオは除外）
     ROOM_WEIGHT = {
         "01A": 0.5,
         "01B": 0.5,
-        "ｱﾝｷﾞｵ": 0,  # 除外
+        "ｱﾝｷﾞｵ": 0,
     }
 
     for _, row in day_data.iterrows():
@@ -185,87 +232,85 @@ def calculate_utilization(day_data, rooms, weekday=""):
     return 0
 
 
+def get_tpl_border(row_offset, col):
+    """テンプレートの罫線を取得（なければ空Border）"""
+    if TPL_HAS_TEMPLATE and (row_offset, col) in TPL_BORDERS:
+        return copy(TPL_BORDERS[(row_offset, col)])
+    return Border()
+
+
+def merge_border_with_fill(tpl_border):
+    """テンプレート罫線をコピーして返す（塗りつぶし時に罫線を保持するため）"""
+    return copy(tpl_border)
+
+
 def write_day_block(ws, start_row, date_str, weekday, day_data, rooms):
     """1日分のガントチャートブロックを書き込む"""
 
-    # --- ヘッダ行（時間軸） ---
     header_row = start_row
-
-    # 稼働率を計算（曜日を渡す）
     utilization = calculate_utilization(day_data, rooms, weekday)
+    last_col = TPL_COL_END  # CO列=93
 
-    # 最終列（22:00の6列分の末尾）
-    last_col = 4 + (TIME_END_HOUR - TIME_START_HOUR + 1) * COLS_PER_HOUR - 1
+    # 行高を設定
+    if TPL_HAS_TEMPLATE:
+        for offset, h in TPL_ROW_HEIGHTS.items():
+            ws.row_dimensions[start_row + offset].height = h
 
-    # 列B: 日付
+    # --- ヘッダ行（時間軸） ---
+    # テンプレートの6行目の書式を適用
+    for c in range(TPL_COL_START, TPL_COL_END + 1):
+        cell = ws.cell(row=header_row, column=c)
+        if TPL_HAS_TEMPLATE and c in TPL_HEADER_CELLS:
+            hdr = TPL_HEADER_CELLS[c]
+            cell.font = copy(hdr['font'])
+            cell.alignment = copy(hdr['alignment'])
+        cell.border = get_tpl_border(0, c)
+
+    # B6: "日付"
     ws.cell(row=header_row, column=2, value="日付")
-    ws.cell(row=header_row, column=2).font = HEADER_FONT
-    ws.cell(row=header_row, column=2).border = Border(top=THIN_SIDE, bottom=THIN_SIDE, left=THIN_SIDE)
-    ws.cell(row=header_row, column=2).alignment = Alignment(horizontal='center', vertical='center')
 
-    # 列C: 部屋名
+    # C6: "部屋名"
     ws.cell(row=header_row, column=3, value="部屋名")
-    ws.cell(row=header_row, column=3).font = HEADER_FONT
-    ws.cell(row=header_row, column=3).border = Border(top=THIN_SIDE, bottom=THIN_SIDE)
-    ws.cell(row=header_row, column=3).alignment = Alignment(horizontal='center', vertical='center')
 
-    # 時間ヘッダ（8:00～22:00すべて6列結合）
+    # 時間ヘッダ（8:00～22:00、各6列結合）
     for h in range(TIME_START_HOUR, TIME_END_HOUR + 1):
         col = 4 + (h - TIME_START_HOUR) * COLS_PER_HOUR
         time_label = h * 100
-        cell = ws.cell(row=header_row, column=col, value=time_label)
-        cell.font = HEADER_FONT
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.border = Border(top=THIN_SIDE, bottom=THIN_SIDE, left=THIN_SIDE, right=THIN_SIDE)
-        # 全時間帯（22:00含む）で6列結合
+        ws.cell(row=header_row, column=col, value=time_label)
         end_col = col + COLS_PER_HOUR - 1
         ws.merge_cells(start_row=header_row, start_column=col, end_row=header_row, end_column=end_col)
 
     # --- 部屋ごとの行 ---
-    last_room_row = start_row + len(rooms)  # 最後の部屋行
-
     for room_idx, room in enumerate(rooms):
         row = start_row + 1 + room_idx
         room_data = day_data[day_data["実施手術室名"] == room]
-        is_last_room = (room_idx == len(rooms) - 1)
+        tpl_row_offset = 1 + room_idx  # テンプレートの7行目~17行目に対応
+
+        # 罫線をテンプレートから適用
+        for c in range(TPL_COL_START, TPL_COL_END + 1):
+            ws.cell(row=row, column=c).border = get_tpl_border(tpl_row_offset, c)
 
         # 日付列（最初の部屋行のみ表示、全部屋を縦結合）
         if room_idx == 0:
-            if "土" in weekday:
-                util_label = f"{date_str}\n{utilization:.1%}"
+            util_label = f"{date_str}\n{utilization:.1%}"
+            date_cell = ws.cell(row=row, column=2, value=util_label)
+            if TPL_HAS_TEMPLATE and TPL_DATE_FONT:
+                date_cell.font = copy(TPL_DATE_FONT)
+                date_cell.alignment = copy(TPL_DATE_ALIGNMENT)
             else:
-                util_label = f"{date_str}\n{utilization:.1%}"
-            ws.cell(row=row, column=2, value=util_label)
-            ws.cell(row=row, column=2).font = DATE_FONT
-            ws.cell(row=row, column=2).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-            ws.cell(row=row, column=2).border = Border(top=THIN_SIDE, left=THIN_SIDE, bottom=THIN_SIDE, right=THIN_SIDE)
+                date_cell.font = Font(name=FONT_NAME, size=9, bold=True)
+                date_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            date_cell.border = get_tpl_border(tpl_row_offset, 2)
             if len(rooms) > 1:
                 ws.merge_cells(start_row=row, start_column=2, end_row=row + len(rooms) - 1, end_column=2)
 
         # 部屋名
-        bottom = THIN_SIDE if is_last_room else None
-        ws.cell(row=row, column=3, value=room)
-        ws.cell(row=row, column=3).font = CELL_FONT
-        ws.cell(row=row, column=3).alignment = Alignment(horizontal='center', vertical='center')
-        ws.cell(row=row, column=3).border = Border(left=THIN_SIDE, right=THIN_SIDE, bottom=bottom)
-
-        # 時間軸の罫線（1時間ごとに縦線 + 最下行は下罫線）
-        for c in range(4, last_col + 1):
-            # 1時間ごとの左罫線判定
-            is_hour_start = ((c - 4) % COLS_PER_HOUR == 0)
-            left = THIN_SIDE if is_hour_start else None
-            # 最終列の右罫線
-            right = THIN_SIDE if c == last_col else None
-            # 最下行の下罫線
-            bot = THIN_SIDE if is_last_room else None
-
-            existing = ws.cell(row=row, column=c).border
-            ws.cell(row=row, column=c).border = Border(
-                left=left if left else existing.left,
-                right=right if right else existing.right,
-                bottom=bot if bot else existing.bottom,
-                top=existing.top
-            )
+        room_cell = ws.cell(row=row, column=3, value=room)
+        if TPL_HAS_TEMPLATE and TPL_ROOM_FONT:
+            room_cell.font = copy(TPL_ROOM_FONT)
+        else:
+            room_cell.font = Font(name=FONT_NAME, size=7)
+        room_cell.alignment = Alignment(horizontal='center', vertical='center')
 
         # 手術バーを描画
         for _, op in room_data.iterrows():
@@ -299,12 +344,8 @@ def write_day_block(ws, start_row, date_str, weekday, day_data, rooms):
                 for c in range(start_col, end_col + 1):
                     cell = ws.cell(row=row, column=c)
                     cell.fill = fill
-                    # 塗りつぶし後も罫線を保持
-                    is_hour_start = ((c - 4) % COLS_PER_HOUR == 0)
-                    left = THIN_SIDE if is_hour_start else None
-                    right = THIN_SIDE if c == last_col else None
-                    bot = THIN_SIDE if is_last_room else None
-                    cell.border = Border(left=left, right=right, bottom=bot)
+                    # 塗りつぶし後もテンプレート罫線を保持
+                    cell.border = get_tpl_border(tpl_row_offset, c)
 
                 ws.cell(row=row, column=start_col, value=bar_label)
                 ws.cell(row=row, column=start_col).font = bar_font
@@ -318,15 +359,17 @@ def write_day_block(ws, start_row, date_str, weekday, day_data, rooms):
 
 def setup_gantt_sheet(ws, title):
     """ガントチャートシートの共通初期設定（列幅・タイトル・凡例）"""
+    # 列幅をテンプレートから適用
     ws.column_dimensions['A'].width = 2
-    ws.column_dimensions['B'].width = 12
-    ws.column_dimensions['C'].width = 6
-
-    total_time_cols = (TIME_END_HOUR - TIME_START_HOUR + 1) * COLS_PER_HOUR
-    for i in range(4, 4 + total_time_cols):
-        ws.column_dimensions[get_column_letter(i)].width = 2.5
-
-    ws.sheet_properties.defaultRowHeight = 18
+    if TPL_HAS_TEMPLATE:
+        for letter, w in TPL_COL_WIDTHS.items():
+            ws.column_dimensions[letter].width = w
+    else:
+        ws.column_dimensions['B'].width = 12
+        ws.column_dimensions['C'].width = 6
+        total_time_cols = (TIME_END_HOUR - TIME_START_HOUR + 1) * COLS_PER_HOUR
+        for i in range(4, 4 + total_time_cols):
+            ws.column_dimensions[get_column_letter(i)].width = 2.5
 
     ws.cell(row=1, column=2, value=title)
     ws.cell(row=1, column=2).font = Font(name=FONT_NAME, size=14, bold=True)
@@ -396,16 +439,18 @@ def main():
     data_ws = wb.active
     data_ws.title = "ガントチャートデータ"
 
-    # テンプレートシートから色を読み取り
+    # テンプレートシートから設定を読み取り
     global COLOR_NORMAL, COLOR_EMERGENCY, LABEL_FONT_NAME, LABEL_FONT_SIZE
     src_wb = load_workbook(INPUT_FILE)
     if "テンプレート" in src_wb.sheetnames:
         tpl_ws = src_wb["テンプレート"]
+
+        # 色の読み取り
         c3_fill = tpl_ws.cell(row=3, column=3).fill
         if c3_fill.fill_type == "solid" and c3_fill.fgColor and c3_fill.fgColor.rgb:
             rgb = str(c3_fill.fgColor.rgb)
             if len(rgb) == 8:
-                rgb = rgb[2:]  # FFRRGGBBからRRGGBBへ
+                rgb = rgb[2:]
             COLOR_NORMAL = rgb
             print(f"テンプレートC3から定時・臨時の色を取得: #{COLOR_NORMAL}")
         c4_fill = tpl_ws.cell(row=4, column=3).fill
@@ -415,6 +460,8 @@ def main():
                 rgb = rgb[2:]
             COLOR_EMERGENCY = rgb
             print(f"テンプレートC4から緊急の色を取得: #{COLOR_EMERGENCY}")
+
+        # ラベルフォントの読み取り
         c5_font = tpl_ws.cell(row=5, column=3).font
         if c5_font.name:
             LABEL_FONT_NAME = c5_font.name
@@ -422,6 +469,10 @@ def main():
             LABEL_FONT_SIZE = c5_font.size
         print(f"テンプレートC5からラベルフォントを取得: {LABEL_FONT_NAME}, {LABEL_FONT_SIZE}pt")
 
+        # 書式情報の読み取り（列幅・行高・罫線・フォント）
+        load_template(tpl_ws)
+
+    # ガントチャートデータシートのコピー
     if "ガントチャートデータ" in src_wb.sheetnames:
         src_ws = src_wb["ガントチャートデータ"]
 
@@ -454,7 +505,6 @@ def main():
     count_date = write_gantt_for_dates(ws_date, df, dates, weekday_map)
 
     # === シート3: 手術室ガントチャート・曜日順 ===
-    # 曜日順にソート: 月→火→水→木→金→土→日、同一曜日内は第N週順
     WEEKDAY_ORDER = {"月": 0, "火": 1, "水": 2, "木": 3, "金": 4, "土": 5, "日": 6}
 
     date_info = []
