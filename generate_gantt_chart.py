@@ -7,8 +7,8 @@
 使い方:
     python generate_gantt_chart.py
 
-入力: ガントチャートデータ.xlsx（同一フォルダに配置）
-出力: 手術室ガントチャート.xlsx（同一フォルダに生成）
+入力: ガントチャート-元データ.xlsx（同一フォルダに配置）
+出力: 手術室ガントチャート-結果.xlsx（同一フォルダに生成）
 """
 
 import pandas as pd
@@ -17,10 +17,17 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from datetime import datetime, timedelta
 import os
+import sys
 
 # ========== 設定 ==========
-INPUT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ガントチャートデータ.xlsx")
-OUTPUT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "手術室ガントチャート.xlsx")
+# PyInstaller exe の場合は exe の場所、通常実行の場合はスクリプトの場所を基準にする
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+INPUT_FILE = os.path.join(BASE_DIR, "ガントチャート-元データ.xlsx")
+OUTPUT_FILE = os.path.join(BASE_DIR, "手術室ガントチャート-結果.xlsx")
 
 # 手術室の表示順
 ROOM_ORDER = ["01A", "01B", "02", "03", "05", "06", "07", "08", "09", "10", "ｱﾝｷﾞｵ"]

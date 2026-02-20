@@ -9,7 +9,18 @@
       "Bash(cmd /c dir \"C:\\\\Users\\\\user\\\\source\\\\repos\\\\JuntenNerimaGanttChart\\\\手術室ガントチャート生成.exe\")",
       "Bash(python create_manual_docx.py:*)",
       "Bash(del \"C:\\\\Users\\\\user\\\\source\\\\repos\\\\JuntenNerimaGanttChart\\\\create_manual_docx.py\")",
-      "Bash(\"C:/Users/user/source/repos/JuntenNerimaOperoomUseTransitionAsTimezone/時間帯別稼働推移計算.exe\")"
+      "Bash(\"C:/Users/user/source/repos/JuntenNerimaOperoomUseTransitionAsTimezone/時間帯別稼働推移計算.exe\")",
+      "Bash(./手術室ガントチャート生成.exe)",
+      "Bash(./手術枠使用状況計算.exe:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(git init:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ]
   }
 }
