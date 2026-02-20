@@ -57,9 +57,9 @@ DEPT_SHORT = {
     "麻酔科・ペインクリニック": "麻",
 }
 
-# 実施区分の色分け
-COLOR_NORMAL = "A0C8E4"   # 水色（定時・臨時）- テンプレートC3準拠
-COLOR_EMERGENCY = "FF8CCC" # ピンク（緊急）- テンプレートC4準拠
+# 実施区分の色分け（デフォルト値。テンプレートシートがあれば上書きされる）
+COLOR_NORMAL = "A0C8E4"   # 水色（定時・臨時）
+COLOR_EMERGENCY = "FF8CCC" # ピンク（緊急）
 
 # フォント設定
 FONT_NAME = "Meiryo UI"
@@ -392,7 +392,26 @@ def main():
     data_ws = wb.active
     data_ws.title = "ガントチャートデータ"
 
+    # テンプレートシートから色を読み取り
+    global COLOR_NORMAL, COLOR_EMERGENCY
     src_wb = load_workbook(INPUT_FILE)
+    if "テンプレート" in src_wb.sheetnames:
+        tpl_ws = src_wb["テンプレート"]
+        c3_fill = tpl_ws.cell(row=3, column=3).fill
+        if c3_fill.fill_type == "solid" and c3_fill.fgColor and c3_fill.fgColor.rgb:
+            rgb = str(c3_fill.fgColor.rgb)
+            if len(rgb) == 8:
+                rgb = rgb[2:]  # FFRRGGBBからRRGGBBへ
+            COLOR_NORMAL = rgb
+            print(f"テンプレートC3から定時・臨時の色を取得: #{COLOR_NORMAL}")
+        c4_fill = tpl_ws.cell(row=4, column=3).fill
+        if c4_fill.fill_type == "solid" and c4_fill.fgColor and c4_fill.fgColor.rgb:
+            rgb = str(c4_fill.fgColor.rgb)
+            if len(rgb) == 8:
+                rgb = rgb[2:]
+            COLOR_EMERGENCY = rgb
+            print(f"テンプレートC4から緊急の色を取得: #{COLOR_EMERGENCY}")
+
     if "ガントチャートデータ" in src_wb.sheetnames:
         src_ws = src_wb["ガントチャートデータ"]
 

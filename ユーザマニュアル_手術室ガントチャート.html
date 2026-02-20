@@ -119,7 +119,7 @@
 <tr><td>配置</td><td>exeと同じフォルダ</td><td>―</td></tr>
 </table>
 
-<div class="note"><strong>テンプレートシートについて：</strong> 入力ファイルに「テンプレート」シートがある場合、C3セル（定時・臨時）とC4セル（緊急）の背景色がガントバーの色として使用されます。</div>
+<div class="note"><strong>テンプレートシートについて：</strong> 入力ファイルに「テンプレート」シートがある場合、C3セル（定時・臨時）とC4セル（緊急）の背景色を動的に読み取り、ガントバーの色として使用します。テンプレートシートのセル色を変更するだけで、出力の色を自由にカスタマイズできます。テンプレートシートがない場合はデフォルト色（水色 #A0C8E4 / ピンク #FF8CCC）が使用されます。</div>
 
 <h3>4.2 カラム定義</h3>
 <table>
@@ -172,11 +172,11 @@
 
 <h3>5.4 色分け</h3>
 <table>
-<tr><th>区分</th><th>色</th><th>サンプル</th></tr>
-<tr><td>定時・臨時</td><td>水色（#A0C8E4）</td><td><span class="color-sample" style="background:#A0C8E4"></span></td></tr>
-<tr><td>緊急</td><td>ピンク（#FF8CCC）</td><td><span class="color-sample" style="background:#FF8CCC"></span></td></tr>
+<tr><th>区分</th><th>色（デフォルト）</th><th>サンプル</th><th>変更方法</th></tr>
+<tr><td>定時・臨時</td><td>水色（#A0C8E4）</td><td><span class="color-sample" style="background:#A0C8E4"></span></td><td>テンプレートシートC3セルの背景色を変更</td></tr>
+<tr><td>緊急</td><td>ピンク（#FF8CCC）</td><td><span class="color-sample" style="background:#FF8CCC"></span></td><td>テンプレートシートC4セルの背景色を変更</td></tr>
 </table>
-<div class="note"><strong>補足：</strong> 色は入力ファイルの「テンプレート」シートのC3セル（定時・臨時）、C4セル（緊急）の背景色に準拠しています。</div>
+<div class="note"><strong>色のカスタマイズ：</strong> 入力ファイル（<code>ガントチャート-元データ.xlsx</code>）の「テンプレート」シートにあるC3セル・C4セルの背景色を変更すると、次回実行時からガントバーの色が自動的に反映されます。exeの再ビルドは不要です。テンプレートシートがない場合はデフォルト色が使用されます。</div>
 
 <h3>5.5 曜日順シートの並び順</h3>
 <p>「手術室ガントチャート・曜日順」シートでは、以下の順で日付が並びます。</p>
@@ -300,8 +300,8 @@
 <tr><td>出力ファイル名</td><td>OUTPUT_FILE</td><td>手術室ガントチャート-結果.xlsx</td></tr>
 <tr><td>手術室の表示順</td><td>ROOM_ORDER</td><td>["01A","01B","02","03","05","06","07","08","09","10","ｱﾝｷﾞｵ"]</td></tr>
 <tr><td>時間範囲</td><td>TIME_START_HOUR / TIME_END_HOUR</td><td>8 / 22</td></tr>
-<tr><td>定時の色</td><td>COLOR_NORMAL</td><td>#A0C8E4（テンプレートC3準拠）</td></tr>
-<tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>#FF8CCC（テンプレートC4準拠）</td></tr>
+<tr><td>定時の色</td><td>COLOR_NORMAL</td><td>デフォルト #A0C8E4（テンプレートC3から動的取得）</td></tr>
+<tr><td>緊急の色</td><td>COLOR_EMERGENCY</td><td>デフォルト #FF8CCC（テンプレートC4から動的取得）</td></tr>
 <tr><td>室数換算</td><td>ROOM_WEIGHT</td><td>01A:0.5, 01B:0.5, ｱﾝｷﾞｵ:0</td></tr>
 <tr><td>室数合計</td><td>room_count</td><td>9.0</td></tr>
 </table>
