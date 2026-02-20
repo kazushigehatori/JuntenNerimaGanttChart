@@ -95,11 +95,19 @@ def load_template(tpl_ws):
     TPL_HAS_TEMPLATE = True
 
     # 列幅（B～CO）
-    for col_idx in range(TPL_COL_START, TPL_COL_END + 1):
-        letter = get_column_letter(col_idx)
-        w = tpl_ws.column_dimensions[letter].width
-        if w:
-            TPL_COL_WIDTHS[letter] = w
+    # openpyxlは範囲指定の列幅(min~max)を先頭列にしか反映しないため、
+    # worksheet.column_dimensions内部データから範囲指定を正しく展開する
+    for key, dim in tpl_ws.column_dimensions.items():
+        if dim.width is None:
+            continue
+        if hasattr(dim, 'min') and hasattr(dim, 'max') and dim.min and dim.max:
+            for col_idx in range(dim.min, dim.max + 1):
+                if TPL_COL_START <= col_idx <= TPL_COL_END:
+                    TPL_COL_WIDTHS[get_column_letter(col_idx)] = dim.width
+        else:
+            col_idx = dim.min if hasattr(dim, 'min') and dim.min else None
+            if col_idx and TPL_COL_START <= col_idx <= TPL_COL_END:
+                TPL_COL_WIDTHS[get_column_letter(col_idx)] = dim.width
 
     # 行高（6～17 → offset 0～11）
     for r in range(TPL_HEADER_ROW, TPL_LAST_ROOM_ROW + 1):
