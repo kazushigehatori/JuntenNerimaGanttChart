@@ -12,9 +12,10 @@
 """
 
 import pandas as pd
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from copy import copy
 from datetime import datetime, timedelta
 import os
 import sys
@@ -57,8 +58,8 @@ DEPT_SHORT = {
 }
 
 # 実施区分の色分け
-COLOR_NORMAL = "BDD7EE"   # 水色（定時・臨時）
-COLOR_EMERGENCY = "FF99CC" # ピンク（緊急）
+COLOR_NORMAL = "A0C8E4"   # 水色（定時・臨時）- テンプレートC3準拠
+COLOR_EMERGENCY = "FF8CCC" # ピンク（緊急）- テンプレートC4準拠
 
 # フォント設定
 FONT_NAME = "Meiryo UI"
@@ -388,6 +389,39 @@ def main():
     ws.page_setup.paperSize = ws.PAPERSIZE_A3
     ws.page_setup.fitToWidth = 1
     ws.page_setup.fitToHeight = 0
+
+    # 元データの「ガントチャートデータ」シートをコピー
+    src_wb = load_workbook(INPUT_FILE)
+    if "ガントチャートデータ" in src_wb.sheetnames:
+        src_ws = src_wb["ガントチャートデータ"]
+        dst_ws = wb.create_sheet("ガントチャートデータ")
+
+        # 列幅をコピー
+        for col_letter, dim in src_ws.column_dimensions.items():
+            dst_ws.column_dimensions[col_letter].width = dim.width
+            dst_ws.column_dimensions[col_letter].hidden = dim.hidden
+
+        # 行の高さをコピー
+        for row_num, dim in src_ws.row_dimensions.items():
+            dst_ws.row_dimensions[row_num].height = dim.height
+            dst_ws.row_dimensions[row_num].hidden = dim.hidden
+
+        # セルデータと書式をコピー
+        for row in src_ws.iter_rows(min_row=1, max_row=src_ws.max_row, max_col=src_ws.max_column):
+            for cell in row:
+                dst_cell = dst_ws.cell(row=cell.row, column=cell.column, value=cell.value)
+                if cell.has_style:
+                    dst_cell.font = copy(cell.font)
+                    dst_cell.fill = copy(cell.fill)
+                    dst_cell.border = copy(cell.border)
+                    dst_cell.alignment = copy(cell.alignment)
+                    dst_cell.number_format = cell.number_format
+
+        # 結合セルをコピー
+        for merged_range in src_ws.merged_cells.ranges:
+            dst_ws.merge_cells(str(merged_range))
+
+    src_wb.close()
 
     # 保存
     wb.save(OUTPUT_FILE)
