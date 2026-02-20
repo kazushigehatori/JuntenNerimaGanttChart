@@ -312,39 +312,21 @@ def write_day_block(ws, start_row, date_str, weekday, day_data, rooms):
     return start_row + 1 + len(rooms)
 
 
-def main():
-    print(f"入力ファイル読み込み: {INPUT_FILE}")
-    df = pd.read_excel(INPUT_FILE, sheet_name="ガントチャートデータ", dtype={"実施手術室名": str})
-
-    # 日付でソート
-    df["手術実施日_sort"] = pd.to_datetime(df["手術実施日"], format="%Y/%m/%d")
-    df = df.sort_values(["手術実施日_sort", "実施手術室名", "入室時刻"])
-
-    dates = df["手術実施日"].unique()
-    weekday_map = dict(zip(df["手術実施日"], df["曜日"]))
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "手術室ガントチャート"
-
-    # 列幅設定
+def setup_gantt_sheet(ws, title):
+    """ガントチャートシートの共通初期設定（列幅・タイトル・凡例）"""
     ws.column_dimensions['A'].width = 2
     ws.column_dimensions['B'].width = 12
     ws.column_dimensions['C'].width = 6
 
-    # 時間列の幅（8:00-22:00、各時間6列 = 15時間×6列 = 90列）
     total_time_cols = (TIME_END_HOUR - TIME_START_HOUR + 1) * COLS_PER_HOUR
     for i in range(4, 4 + total_time_cols):
         ws.column_dimensions[get_column_letter(i)].width = 2.5
 
-    # 行の高さ
     ws.sheet_properties.defaultRowHeight = 18
 
-    # タイトル
-    ws.cell(row=1, column=2, value="手術室 ガントチャート（2025年9月）")
+    ws.cell(row=1, column=2, value=title)
     ws.cell(row=1, column=2).font = Font(name=FONT_NAME, size=14, bold=True)
 
-    # 凡例
     legend_row = 2
     legend_col = 2
     ws.cell(row=legend_row, column=legend_col, value="■凡例:")
@@ -365,15 +347,26 @@ def main():
     ws.cell(row=legend_row + 2, column=legend_col, value="※01A・01Bは各0.5室換算、アンギオ室は除外")
     ws.cell(row=legend_row + 2, column=legend_col).font = Font(name=FONT_NAME, size=8)
 
-    # 日付ごとにガントチャートブロックを生成
+    ws.sheet_view.zoomScale = 80
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.paperSize = ws.PAPERSIZE_A3
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+
+
+def write_gantt_for_dates(ws, df, date_list, weekday_map):
+    """日付リストに従ってガントチャートブロックを書き込む"""
     current_row = 6
-    for date_str in dates:
+    count = 0
+    for date_str in date_list:
         day_data = df[df["手術実施日"] == date_str]
         weekday = weekday_map.get(date_str, "")
-        # 曜日を1文字に
         weekday_short = weekday.replace("曜日", "") if isinstance(weekday, str) else ""
 
-        # MM/DD形式に変換
+        # 日曜日はスキップ
+        if "日" in weekday_short:
+            continue
+
         try:
             dt = pd.to_datetime(date_str)
             date_display = f"{dt.month:02d}/{dt.day:02d}({weekday_short})"
@@ -381,35 +374,43 @@ def main():
             date_display = date_str
 
         next_row = write_day_block(ws, current_row, date_display, weekday_short, day_data, ROOM_ORDER)
-        current_row = next_row + 1  # 1行空けて次の日
+        current_row = next_row + 1
+        count += 1
+    return count
 
-    # 印刷設定
-    ws.sheet_view.zoomScale = 80
-    ws.page_setup.orientation = 'landscape'
-    ws.page_setup.paperSize = ws.PAPERSIZE_A3
-    ws.page_setup.fitToWidth = 1
-    ws.page_setup.fitToHeight = 0
 
-    # 元データの「ガントチャートデータ」シートをコピー
+def main():
+    print(f"入力ファイル読み込み: {INPUT_FILE}")
+    df = pd.read_excel(INPUT_FILE, sheet_name="ガントチャートデータ", dtype={"実施手術室名": str})
+
+    # 日付でソート
+    df["手術実施日_sort"] = pd.to_datetime(df["手術実施日"], format="%Y/%m/%d")
+    df = df.sort_values(["手術実施日_sort", "実施手術室名", "入室時刻"])
+
+    dates = df["手術実施日"].unique()
+    weekday_map = dict(zip(df["手術実施日"], df["曜日"]))
+
+    wb = Workbook()
+
+    # === シート1: ガントチャートデータ（元データコピー） ===
+    data_ws = wb.active
+    data_ws.title = "ガントチャートデータ"
+
     src_wb = load_workbook(INPUT_FILE)
     if "ガントチャートデータ" in src_wb.sheetnames:
         src_ws = src_wb["ガントチャートデータ"]
-        dst_ws = wb.create_sheet("ガントチャートデータ")
 
-        # 列幅をコピー
         for col_letter, dim in src_ws.column_dimensions.items():
-            dst_ws.column_dimensions[col_letter].width = dim.width
-            dst_ws.column_dimensions[col_letter].hidden = dim.hidden
+            data_ws.column_dimensions[col_letter].width = dim.width
+            data_ws.column_dimensions[col_letter].hidden = dim.hidden
 
-        # 行の高さをコピー
         for row_num, dim in src_ws.row_dimensions.items():
-            dst_ws.row_dimensions[row_num].height = dim.height
-            dst_ws.row_dimensions[row_num].hidden = dim.hidden
+            data_ws.row_dimensions[row_num].height = dim.height
+            data_ws.row_dimensions[row_num].hidden = dim.hidden
 
-        # セルデータと書式をコピー
         for row in src_ws.iter_rows(min_row=1, max_row=src_ws.max_row, max_col=src_ws.max_column):
             for cell in row:
-                dst_cell = dst_ws.cell(row=cell.row, column=cell.column, value=cell.value)
+                dst_cell = data_ws.cell(row=cell.row, column=cell.column, value=cell.value)
                 if cell.has_style:
                     dst_cell.font = copy(cell.font)
                     dst_cell.fill = copy(cell.fill)
@@ -417,16 +418,49 @@ def main():
                     dst_cell.alignment = copy(cell.alignment)
                     dst_cell.number_format = cell.number_format
 
-        # 結合セルをコピー
         for merged_range in src_ws.merged_cells.ranges:
-            dst_ws.merge_cells(str(merged_range))
+            data_ws.merge_cells(str(merged_range))
 
     src_wb.close()
+
+    # === シート2: 手術室ガントチャート（日付順、日曜除外） ===
+    ws_date = wb.create_sheet("手術室ガントチャート")
+    setup_gantt_sheet(ws_date, "手術室 ガントチャート（2025年9月）")
+    count_date = write_gantt_for_dates(ws_date, df, dates, weekday_map)
+
+    # === シート3: 手術室ガントチャート・曜日順（日曜除外） ===
+    # 曜日順にソート: 月→火→水→木→金→土、同一曜日内は第N週順
+    WEEKDAY_ORDER = {"月": 0, "火": 1, "水": 2, "木": 3, "金": 4, "土": 5}
+
+    # 各日付の曜日と第N週を算出
+    date_info = []
+    for date_str in dates:
+        weekday = weekday_map.get(date_str, "")
+        weekday_short = weekday.replace("曜日", "") if isinstance(weekday, str) else ""
+        if "日" in weekday_short:
+            continue
+        try:
+            dt = pd.to_datetime(date_str)
+            # 第N週: その月の同一曜日の出現回数
+            day_of_month = dt.day
+            # 月初から同じ曜日が何回目か
+            nth = (day_of_month - 1) // 7 + 1
+        except Exception:
+            nth = 1
+        wday_order = WEEKDAY_ORDER.get(weekday_short, 9)
+        date_info.append((wday_order, nth, date_str))
+
+    date_info.sort(key=lambda x: (x[0], x[1]))
+    dates_by_weekday = [d[2] for d in date_info]
+
+    ws_weekday = wb.create_sheet("手術室ガントチャート・曜日順")
+    setup_gantt_sheet(ws_weekday, "手術室 ガントチャート・曜日順（2025年9月）")
+    write_gantt_for_dates(ws_weekday, df, dates_by_weekday, weekday_map)
 
     # 保存
     wb.save(OUTPUT_FILE)
     print(f"ガントチャート生成完了: {OUTPUT_FILE}")
-    print(f"全{len(dates)}日分のガントチャートを出力しました。")
+    print(f"全{count_date}日分のガントチャートを出力しました。（日曜除外）")
 
 
 if __name__ == "__main__":
